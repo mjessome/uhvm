@@ -41,7 +41,7 @@
 #define BASE_MNT_DIR "/media/"
 
 /* not user controlled */
-#define LOCKFILE "/var/run/skvm.pid"
+#define LOCKFILE "/var/run/uhvm.pid"
 #define LOCKMODE (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)
 #define FREE_WRAP(ptr) do { free(ptr); ptr = NULL; } while (0)
 #define INIT_NODE(p1, p2) \
@@ -80,8 +80,10 @@ struct device_t {
     char *label;               /* volume's label */
     char *fstype;              /* filesystem type */
     char *opt;                 /* mount options */
+    char *uuid;                /* device uuid */
     int use_fstab;             /* true if this device has an fstab entry
                                  before inserting the device */
+    int use_uuid;              /* true if was mounted by uuid */
     int should_remove_entry;   /* true if upon removal of the device
                                  an entry in fstab needs to be removed */
     LibHalVolume *volume;
@@ -114,7 +116,7 @@ static int debug_mode_flag = 0;
  */
 
 /* (de)/initialization functions */
-static int init_skvm(void);
+static int init_uhvm(void);
 static int init_dbus(DBusError *error);
 static int init_hal(void);
 static void deinit(void);
@@ -175,7 +177,7 @@ main(int argc, char *argv[])
     if (debug_mode_flag)
         setvbuf(stdout, (char *)NULL, _IONBF, 0); /* avoid surprises */
 
-    if (init_skvm() < 0)
+    if (init_uhvm() < 0)
         return EXIT_FAILURE;
 
     openlog(argv[0], LOG_PID, LOG_DAEMON);
@@ -196,7 +198,7 @@ main(int argc, char *argv[])
 }
 
 static int
-init_skvm(void)
+init_uhvm(void)
 {
     DBusError error;
 
@@ -414,7 +416,25 @@ get_device(char *mountp, const char *did, char *dev, char *label,
         device->drive = drive;
         device->next = NULL;
         device->use_fstab = 0;
+        device->use_uuid = 0;
         device->should_remove_entry = 0;
+
+        /* retrieve the uuid of the device */
+        if ((did = strrchr(device->did, '/'))) {
+            did = strstr(did, "uuid");
+            if (did) {
+                did = strchr(did, '_');
+                if (did) {
+                    ++did;
+                    device->uuid = malloc(sizeof(did));
+                    strcpy(device->uuid, did);
+                    char* c = device->uuid;
+                    while((c=strrchr(c, '_')))
+                        *c = '-';
+                }
+            }
+        }
+
         if (!device->did || !device->label || !device->fstype) {
             /* freeing null pointers is GOOD */
             FREE_WRAP(device->did);
@@ -587,7 +607,7 @@ consider_fstab(struct device_t *device)
 {
     FILE *fp, *mtab;
     struct mntent *entry, *i;
-    char rlink[1024], *tmp, *str, *did;
+    char rlink[1024], *tmp, *str;
     size_t len;
 
     if (!device)
@@ -596,21 +616,12 @@ consider_fstab(struct device_t *device)
     if (!(fp = setmntent("/etc/fstab", "r")))
         return;
 
-    /* retrieve the uuid of the device */
-    if ((did = strrchr(device->did, '/'))) {
-        did = strstr(did, "uuid");
-        if (did) {
-            did = strchr(did, '_');
-            if (did)
-                ++did;
-        }
-    }
-
     while ((entry = getmntent(fp))) {
         /* check if we have an entry in fstab that suits our needs */
         if (!strcmp(device->dev, entry->mnt_fsname)
-                || (did && strstr(entry->mnt_fsname, "UUID=")
-                    && strstr(entry->mnt_fsname, did))
+                || (device->uuid && strstr(entry->mnt_fsname, "UUID=")
+                    && strstr(entry->mnt_fsname, device->uuid)
+                    && (device->use_uuid = 1))
                 || (strstr(entry->mnt_fsname, "LABEL=")
                     && strstr(entry->mnt_fsname, device->label))
                 || (!resolve_symlink(entry->mnt_fsname, rlink, 1024)
@@ -777,7 +788,7 @@ cleanup(int sig __attribute__ ((unused)))
 }
 
 /*
- * Check if skvm is already running, the caller has to make sure that the log
+ * Check if uhvm is already running, the caller has to make sure that the log
  * file has been opened and the new instance has been daemonized.
  */
 static int
@@ -818,6 +829,7 @@ debug_dump_device(const struct device_t *device)
     printf("Volume info: %s\n", (!device->did) ? "(null)" : device->did);
     printf("Device: %s\n", (!device->dev) ? "(null)" : device->dev);
     printf("Label: %s\n", (!device->label) ? "(null)" : device->label);
+    printf("UUID: %s\n", (!device->uuid) ? "(null)" : device->uuid);
     printf("Filesystem type: %s\n",
            (!device->fstype) ? "(null)" : device->fstype);
     printf("Mount options: %s\n",
@@ -825,6 +837,7 @@ debug_dump_device(const struct device_t *device)
     printf("Mount point: %s\n",
            (!device->mountp) ? "(null)" : device->mountp);
     printf("Uses /etc/fstab: %d\n", device->use_fstab);
+    printf("Uses uuid: %d\n", device->use_uuid);
     printf("Cleanup after /etc/fstab: %d\n", device->should_remove_entry);
 }
 
