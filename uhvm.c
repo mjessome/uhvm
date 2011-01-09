@@ -417,7 +417,7 @@ get_device(char *mountp, const char *did, char *dev, char *label,
         device->drive = drive;
         device->next = NULL;
         device->use_fstab = 0;
-        device->use_uuid = 0;
+        device->use_uuid = 1;
         device->should_remove_entry = 0;
 
         /* retrieve the uuid of the device */
@@ -619,10 +619,10 @@ consider_fstab(struct device_t *device)
 
     while ((entry = getmntent(fp))) {
         /* check if we have an entry in fstab that suits our needs */
-        if (!strcmp(device->dev, entry->mnt_fsname)
+        if ((!strcmp(device->dev, entry->mnt_fsname)
+                && (device->use_uuid = 0))
                 || (device->uuid && strstr(entry->mnt_fsname, "UUID=")
-                    && strstr(entry->mnt_fsname, device->uuid)
-                    && (device->use_uuid = 1))
+                    && strstr(entry->mnt_fsname, device->uuid))
                 || (strstr(entry->mnt_fsname, "LABEL=")
                     && strstr(entry->mnt_fsname, device->label))
                 || (!resolve_symlink(entry->mnt_fsname, rlink, 1024)
@@ -670,9 +670,9 @@ do_mount(const struct device_t *device)
     if (!device)
         return -1;
 
-    if(device->use_uuid) {
-        add_mtab_entry(device);
-        return EXEC_CMD(
+    
+    if (add_mtab_entry(device)) return -1;
+    return EXEC_CMD(
         ((char * []) {
              MOUNT_CMD_PATH,
              "-n",
@@ -681,19 +681,6 @@ do_mount(const struct device_t *device)
              "-U", device->uuid,
              device->mountp,
              (char *)NULL
-        })) ? 0 : -1;
-    }
-
-    return EXEC_CMD(
-    ((char * []) {
-        MOUNT_CMD_PATH,
-        "-t",
-        device->fstype,
-        "-o",
-        (!device->opt) ? DEFAULT_MNT_OPTIONS : device->opt,
-        device->dev,
-        device->mountp,
-        (char *)NULL
     })) ? 0 : -1;
 }
 
@@ -716,13 +703,16 @@ add_mtab_entry(const struct device_t *device)
     struct mntent entry;
     char fsname[128];
 
-    if(!device)
+    if (!device)
         return -1;
     mtab = setmntent("/etc/mtab", "a");
-    if(!mtab)
+    if (!mtab)
         return -1;
 
-    snprintf(fsname, 128, "UUID=%s", device->uuid);
+    if (device->use_uuid && device->uuid)
+        snprintf(fsname, 128, "UUID=%s", device->uuid);
+    else
+        strcpy(fsname, device->dev);
 
     entry.mnt_fsname = fsname;
     entry.mnt_dir = device->mountp;
@@ -741,6 +731,7 @@ add_fstab_entry(const struct device_t *device)
 {
     FILE *fstab;
     struct mntent entry;
+    char fsname[128];
 
     if (!device || device->use_fstab)
         return -1;
@@ -748,7 +739,12 @@ add_fstab_entry(const struct device_t *device)
     if (!fstab)
         return -1;
 
-    entry.mnt_fsname = device->dev;
+    if(device->use_uuid && device->uuid)
+        snprintf(fsname, 128, "UUID=%s", device->uuid);
+    else
+        strcpy(fsname, device->dev);
+
+    entry.mnt_fsname = fsname;
     entry.mnt_dir = device->mountp;
     entry.mnt_type = device->fstype;
     entry.mnt_opts = (!device->opt) ? DEFAULT_MNT_OPTIONS : device->opt;
