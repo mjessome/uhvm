@@ -693,7 +693,7 @@ do_umount(const struct device_t *device)
 
     return EXEC_CMD(
     ((char * []) {
-        UMOUNT_CMD_PATH, device->dev, (char *)NULL
+        UMOUNT_CMD_PATH, device->mountp, (char *)NULL
     })) ? 0 : -1;
 }
 
