@@ -138,7 +138,7 @@ static void free_device(struct device_t *device);
 
 /* functions related to how the volume manager behaves when
  * a new device is inserted */
-static int is_mounted(const char *dev);
+static int is_mounted(const struct device_t *device);
 static char *get_mount_point(const char *dev, const char *label);
 static int resolve_symlink(const char *symlnk, char *d, size_t d_len);
 static void consider_fstab(struct device_t *device);
@@ -279,7 +279,7 @@ deinit(void)
 
     while (iter) {
         tmp = iter;
-        if (!is_mounted(iter->dev))
+        if (!is_mounted(iter))
             /* don't care to check the return values */
             do_umount(iter);
         rmdir(iter->mountp);
@@ -382,7 +382,7 @@ device_removed(LibHalContext *context __attribute__ ((unused)),
         if (!strcmp(did, iter->did)) {
             mountp = iter->mountp;
             if (!file_exists(mountp)) {
-                if (!is_mounted(iter->dev))
+                if (!is_mounted(iter))
                     if (do_umount(iter))
                         syslog(LOG_ERR, "%s:%d: %s", __FILE__, __LINE__,
                                strerror(errno));
@@ -508,7 +508,7 @@ free_device(struct device_t *device)
 }
 
 static int
-is_mounted(const char *dev)
+is_mounted(const struct device_t *device)
 {
     FILE *mtab;
     struct mntent *entry;
@@ -518,7 +518,8 @@ is_mounted(const char *dev)
         return -1;
 
     while ((entry = getmntent(mtab))) {
-        if (!strcmp(entry->mnt_fsname, dev)) {
+        if ((device->use_uuid && strstr(entry->mnt_fsname, device->uuid))
+            || !strcmp(entry->mnt_fsname, device->dev)) {
             endmntent(mtab);
             return 0;
         }
@@ -537,7 +538,7 @@ get_mount_point(const char *dev, const char *label)
     struct dirent *dirent;
     DIR *dir;
 
-    if (!is_mounted(dev) || !(dev_tmp = strrchr(dev, '/')))
+    if (!(dev_tmp = strrchr(dev, '/')))
         return NULL;
 
     ++dev_tmp;
