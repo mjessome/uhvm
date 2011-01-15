@@ -799,8 +799,12 @@ remove_fstab_entry(const struct device_t *device)
 
     i = 0;
     while (i < lines) {
-        if (!strstr(tmp[i], device->dev))
+        if (!((device->use_uuid && device->uuid
+            && strstr(tmp[i], "UUID=") && strstr(tmp[i], device->uuid))
+            || strstr(tmp[i], device->dev))) {
+
             fprintf(fstab, "%s", tmp[i]);
+        }
         ++i;
     }
 
