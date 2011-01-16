@@ -1,5 +1,5 @@
 bin = uhvm
-ver = 0.2
+ver = 0.3
 src = uhvm.c
 inc = -I/usr/include -I/usr/include/hal
 
