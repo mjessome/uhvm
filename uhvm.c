@@ -923,5 +923,7 @@ debug_dump_device(const struct device_t *device)
     printf("Uses /etc/fstab: %d\n", device->use_fstab);
     printf("Uses uuid: %d\n", device->use_uuid);
     printf("Cleanup after /etc/fstab: %d\n", device->should_remove_entry);
+    printf("Mount Hook: %s\n", (!device->hook[0]) ? "None" : device->hook[0]);
+    printf("Unmount Hook: %s\n", (!device->hook[1]) ? "None" : device->hook[1]);
 }
 
