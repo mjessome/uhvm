@@ -142,7 +142,7 @@ static void remove_from_device_list(struct device_t *prev,
 static void free_device(struct device_t *device);
 
 /* functions related to device hooks */
-char *get_hook(struct device_t *device);
+char *get_hook(struct device_t *device, char * hook_type);
 int run_hook(char *hook);
 
 /* functions related to how the volume manager behaves when
@@ -363,7 +363,7 @@ device_added(LibHalContext *context, const char *did)
     consider_fstab(device);
 
     device->hook = malloc(3*sizeof(char*)); 
-    if(!file_exists(HOOK_DIR)) {
+    if(!file_exists(HOOK_PATH)) {
         device->hook[0] = get_hook(device, "pre-mount");
         device->hook[1] = get_hook(device, "post-mount");
         device->hook[2] = get_hook(device, "post-umount");
@@ -414,7 +414,7 @@ device_removed(LibHalContext *context __attribute__ ((unused)),
                 if (iter->should_remove_entry && remove_fstab_entry(iter))
                     syslog(LOG_ERR, "%s:%d: %s", __FILE__, __LINE__,
                            "cannot remove fstab entry");
-                if(iter->hook[2]) run_hook[2];
+                if(iter->hook[2]) run_hook(iter->hook[2]);
                 remove_from_device_list(prev, iter);
             }
             return;
@@ -534,7 +534,7 @@ char *
 get_hook(struct device_t *device, char *hook_type)
 {
     char *hook = malloc(255);
-    snprintf(hook, 255, "%s/%s.%s", HOOK_DIR, device->uuid, hook_type);
+    snprintf(hook, 255, "%s/%s.%s", HOOK_PATH, device->uuid, hook_type);
 
     if(!file_exists(hook)) {
         return hook;
