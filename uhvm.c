@@ -522,6 +522,19 @@ free_device(struct device_t *device)
     FREE_WRAP(device);
 }
 
+char *
+get_hook(struct device_t *device, char *hook_type)
+{
+    char *hook = malloc(255);
+    snprintf(hook, 255, "%s/%s.%s", HOOK_DIR, device->uuid, hook_type);
+
+    if(!file_exists(hook)) {
+        return hook;
+    }
+    free(hook);
+    return NULL;
+}
+
 static int
 is_mounted(const struct device_t *device)
 {
