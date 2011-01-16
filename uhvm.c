@@ -87,6 +87,10 @@ struct device_t {
     int use_uuid;              /* true if was mounted by uuid */
     int should_remove_entry;   /* true if upon removal of the device
                                  an entry in fstab needs to be removed */
+    char** hook;               /* hook[0] - pre mount
+                                  hook[1] - post mount
+                                  hook[2] - post umount */
+
     LibHalVolume *volume;
     LibHalDrive *drive;
     struct device_t *next;
