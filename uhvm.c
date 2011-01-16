@@ -543,7 +543,8 @@ run_hook(int hook, struct device_t *device)
 {
         EXEC_CMD(((char* []) {
             device->hook[hook], device->dev,
-            device->mountp, device->label, device->fstype
+            device->mountp, device->label,
+            device->fstype, (char*) NULL
             }));
         return 0;
 }
