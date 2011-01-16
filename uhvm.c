@@ -361,6 +361,14 @@ device_added(LibHalContext *context, const char *did)
     if (!device)
         goto out;
     consider_fstab(device);
+
+    device->hook = malloc(3*sizeof(char*)); 
+    if(!file_exists(HOOK_DIR)) {
+        device->hook[0] = get_hook(device, "pre-mount");
+        device->hook[1] = get_hook(device, "post-mount");
+        device->hook[2] = get_hook(device, "post-umount");
+    }
+
     if (file_exists(device->mountp) < 0)
         mkdir(device->mountp, 0750);
 
