@@ -28,6 +28,18 @@ How to use it
 * sudo /etc/rc.d/uhvm restart
 * sudo /etc/rc.d/uhvm stop
 
+Using hooks
+===========
+* The default location for hooks is /etc/uhvm/hooks.
+* Hooks are located and called using the device UUID.
+* UUID.mount, UUID.umount are recognized, where UUID
+  is the UUID of the device.
+* The hook scripts are passed the following arguments, in order:
+*       device (eg. /dev/sda1)
+*       mount point
+*       volume's label
+*       fstype
+
 Info
 ====
 To unmount a drive, you do not have to be root. If you cold eject a drive, uhvm 
