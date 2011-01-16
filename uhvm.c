@@ -142,7 +142,7 @@ static void remove_from_device_list(struct device_t *prev,
 static void free_device(struct device_t *device);
 
 /* functions related to device hooks */
-char *get_hooks(struct device_t *device);
+char *get_hook(struct device_t *device);
 int run_hook(char *hook);
 
 /* functions related to how the volume manager behaves when
