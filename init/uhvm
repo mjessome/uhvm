@@ -1,0 +1,37 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+PID=`pidof -o %PPID /usr/bin/uhvm`
+case "$1" in
+	start)
+		stat_busy "Starting UHVM Daemon"
+		[ -z "$PID" ] && /usr/bin/uhvm &>/dev/null
+		if [ $? -gt 0 ]; then
+			stat_fail
+		else
+			add_daemon uhvm
+			stat_done
+		fi
+		;;
+	stop)
+		stat_busy "Stopping UHVM Daemon"
+		[ ! -z "$PID" ] && kill $PID &> /dev/null
+		if [ $? -gt 0 ]; then
+			stat_fail
+		else
+			rm -f /var/run/uhvm.pid
+			rm_daemon uhvm
+			stat_done
+		fi
+		;;
+	restart)
+		$0 stop
+		sleep 3
+		$0 start
+		;;
+	*)
+		echo "usage: $0 {start|stop|restart}"
+esac
+exit 0
