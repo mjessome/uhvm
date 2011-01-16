@@ -39,6 +39,7 @@
 #define UMOUNT_CMD_PATH "/bin/umount"
 #define DEFAULT_MNT_OPTIONS "noexec,nosuid,nodev,users"
 #define BASE_MNT_DIR "/media/"
+#define HOOK_PATH "/etc/uhvm/hooks"
 
 /* not user controlled */
 #define LOCKFILE "/var/run/uhvm.pid"
@@ -135,6 +136,10 @@ static void add_to_device_list(struct device_t *device);
 static void remove_from_device_list(struct device_t *prev,
                                     struct device_t *curr);
 static void free_device(struct device_t *device);
+
+/* functions related to device hooks */
+char *get_hooks(struct device_t *device);
+int run_hook(char *hook);
 
 /* functions related to how the volume manager behaves when
  * a new device is inserted */
@@ -354,6 +359,9 @@ device_added(LibHalContext *context, const char *did)
     consider_fstab(device);
     if (file_exists(device->mountp) < 0)
         mkdir(device->mountp, 0750);
+
+    if (device->hook[0]) run_hook(device->hook[0]);
+
     do_mount(device) < 0 ? free_device(device) : add_to_device_list(device);
 
     if (device) {
@@ -362,6 +370,8 @@ device_added(LibHalContext *context, const char *did)
         if (debug_mode_flag)
             debug_dump_device(device);
     }
+
+    if (device->hook[1]) run_hook(device->hook[1]);
 
 out:
     if (mountable)
@@ -392,6 +402,7 @@ device_removed(LibHalContext *context __attribute__ ((unused)),
                 if (iter->should_remove_entry && remove_fstab_entry(iter))
                     syslog(LOG_ERR, "%s:%d: %s", __FILE__, __LINE__,
                            "cannot remove fstab entry");
+                if(iter->hook[2]) run_hook[2];
                 remove_from_device_list(prev, iter);
             }
             return;
