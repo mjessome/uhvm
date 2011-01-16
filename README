@@ -1,0 +1,35 @@
+uhvm v0.2
+
+What is it?
+===========
+uhvm is a lightweight volume manager for GNU/Linux.
+It is an extension on skvm from the Suckless group (http://suckless.org), that
+makes constant use of the UUID of devices, and adds support for hooks.
+It depends on hal and dbus. It is meant to be simple to use, efficient & 
+functional. It has been tested and working on Arch linux, however 
+the init script needs to be adapted when used on Debian.
+
+Warning
+=======
+Make sure you back up your /etc/fstab.
+
+Installation
+============
+* make
+* make install
+
+* Do not forget to alter your /etc/rc.conf to include 'uhvm' in the
+  DAEMONS section. If you are using Arch linux use the supplied PKGBUILD
+  for a clean installation.
+
+How to use it
+=============
+* sudo /etc/rc.d/uhvm start
+* sudo /etc/rc.d/uhvm restart
+* sudo /etc/rc.d/uhvm stop
+
+Info
+====
+To unmount a drive, you do not have to be root. If you cold eject a drive, uhvm 
+will unmount it and delete the mountpoint.
+That is probably not a good idea.
