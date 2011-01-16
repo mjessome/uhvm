@@ -349,7 +349,7 @@ device_added(LibHalContext *context, const char *did)
     if (!mountp)
         goto out;
     device = get_device(mountp, did, dev, label, fstype, volume, drive);
-    if(is_mounted(device)) {
+    if(!is_mounted(device)) {
         free_device(device);
         goto out;
     }
