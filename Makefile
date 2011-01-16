@@ -39,17 +39,12 @@ install: all
 	@mkdir -p $(etc)/rc.d
 	@cp -f init/$(bin) $(etc)/rc.d
 	@chmod 755 $(etc)/rc.d/$(bin)
-	@echo installing manpage at $(dst)/share/man/man1
-	@mkdir -p $(dst)/share/man/man1
-	@sed "s/VERSION/$(ver)/g" < uhvm.1 > $(dst)/share/man/man1/uhvm.1
-	@chmod 644 $(dst)/share/man/man1/uhvm.1
 
 uninstall:
 	@echo removing /usr/bin/$(bin)
 	@rm -f $(dst)/bin/$(bin)
 	@echo removing $(etc)/rc.d/$(bin)
 	@rm -f $(etc)/rc.d/$(bin)
-	@echo removing $(dst)/share/man/man1/uhvm.1
 	@rm -f $(dst)/share/man/man1/uhvm.1
 
 .PHONY: all clean dist install uninstall
