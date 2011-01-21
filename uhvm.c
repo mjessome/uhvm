@@ -458,6 +458,8 @@ get_device(char *mountp, const char *did, char *dev, char *label,
             }
             else {
                 device->use_uuid = 0;
+                free(device->uuid);
+                device->uuid = NULL;
             }
         }
 
