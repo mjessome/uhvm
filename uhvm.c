@@ -458,7 +458,6 @@ get_device(char *mountp, const char *did, char *dev, char *label,
             }
             else {
                 device->use_uuid = 0;
-                free(device->uuid);
                 device->uuid = NULL;
             }
         }
@@ -530,6 +529,8 @@ free_device(struct device_t *device)
         libhal_volume_free(device->volume);
     if (device->drive)
         libhal_drive_free(device->drive);
+    if (device->use_uuid && device->uuid)
+        FREE_WRAP(device->uuid);
 
     FREE_WRAP(device);
 }
