@@ -724,7 +724,8 @@ do_mount(const struct device_t *device)
 
     
     if (add_mtab_entry(device)) return -1;
-    return EXEC_CMD(
+    if(device->uuid && device->use_uuid) {
+        return EXEC_CMD(
         ((char * []) {
              MOUNT_CMD_PATH,
              "-n",
@@ -733,7 +734,20 @@ do_mount(const struct device_t *device)
              "-U", device->uuid,
              device->mountp,
              (char *)NULL
-    })) ? 0 : -1;
+        })) ? 0 : -1;
+    }
+    else {
+        return EXEC_CMD(
+        ((char * []) {
+             MOUNT_CMD_PATH,
+             "-n",
+             "-t", device->fstype,
+             "-o", (!device->opt) ? DEFAULT_MNT_OPTIONS : device->opt,
+             device->dev,
+             device->mountp,
+             (char *)NULL
+        })) ? 0 : -1;
+    }
 }
 
 static int
