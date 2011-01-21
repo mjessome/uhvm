@@ -445,7 +445,7 @@ get_device(char *mountp, const char *did, char *dev, char *label,
         /* retrieve the uuid of the device */
         if ((did = strrchr(device->did, '/'))) {
             did = strstr(did, "uuid");
-            if (did) {
+            if (did && did != '\0') {
                 did = strchr(did, '_');
                 if (did) {
                     ++did;
@@ -455,6 +455,9 @@ get_device(char *mountp, const char *did, char *dev, char *label,
                     while((c=strrchr(c, '_')))
                         *c = '-';
                 }
+            }
+            else {
+                device->use_uuid = 0;
             }
         }
 
