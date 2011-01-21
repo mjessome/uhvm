@@ -39,6 +39,8 @@ install: all
 	@mkdir -p $(etc)/rc.d
 	@cp -f init/$(bin) $(etc)/rc.d
 	@chmod 755 $(etc)/rc.d/$(bin)
+	@echo making hooks directory
+	@mkdir -p /etc/${bin}/hooks
 
 uninstall:
 	@echo removing /usr/bin/$(bin)
