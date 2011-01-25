@@ -370,6 +370,10 @@ device_added(LibHalContext *context, const char *did)
         device->hook[0] = get_hook(device, "mount");
         device->hook[1] = get_hook(device, "umount");
     }
+    else {
+        device->hook[0] = NULL;
+        device->hook[1] = NULL;
+    }
 
     if (file_exists(device->mountp) < 0)
         mkdir(device->mountp, 0750);
@@ -887,7 +891,7 @@ static inline int
 file_exists(const char *s)
 {
     struct stat sb;
-    return ((stat(s, &sb) < 0 && errno == ENOENT) ? -ENOENT : 0);
+    return ((stat(s, &sb) < 0) ? -ENOENT : 0);
 }
 
 static void
