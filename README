@@ -32,8 +32,8 @@ Using hooks
 ===========
 * The default location for hooks is /etc/uhvm/hooks.
 * Hooks are located and called using the device UUID.
-* UUID.mount, UUID.umount are recognized, where UUID
-  is the UUID of the device.
+* ID.mount, ID.umount are recognized, where ID is either the UUID
+  or the label of the device.
 * The hook scripts are passed the following arguments, in order:
 *       device (eg. /dev/sda1)
 *       mount point

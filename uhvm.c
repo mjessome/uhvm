@@ -543,11 +543,19 @@ char *
 get_hook(struct device_t *device, char *hook_type)
 {
     char *hook = malloc(255);
-    snprintf(hook, 255, "%s/%s.%s", HOOK_PATH, device->uuid, hook_type);
-
-    if(!file_exists(hook)) {
-        return hook;
+    if(device->uuid) {
+        snprintf(hook, 255, "%s/%s.%s", HOOK_PATH, device->uuid, hook_type);
+        if(!file_exists(hook)) {
+            return hook;
+        }
     }
+    if(device->label) {
+        snprintf(hook, 255, "%s/%s.%s", HOOK_PATH, device->label, hook_type);
+        if(!file_exists(hook)) {
+            return hook;
+        }
+    }
+
     free(hook);
     return NULL;
 }
